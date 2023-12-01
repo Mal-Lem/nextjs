@@ -5,7 +5,7 @@ import Navigation from '../components/navigation/Navigation'
 
 function MyApp({Component,pageProps}){
     return (
-        <Fragment>
+    <Fragment>
     <Navigation/>
     <Component {...pageProps} />
     </Fragment>

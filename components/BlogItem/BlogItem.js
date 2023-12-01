@@ -4,10 +4,9 @@ export default function BlogItem(props)
 {
     const { title, image,description,details,slug} = props
     const router = useRouter()
-    const onNavigate = () =>{
-        router.push(`/${slug}`)
-    }
-
+    const onNavigate = () => {
+        router.push(`/${slug}`);
+      };      
     return (
     <div className="max-w-sm mx-auto my-2 overflow-hidden rounded shadow-lg">
         <img className="w-full h-60" src={image} alt={title} />
@@ -16,12 +15,14 @@ export default function BlogItem(props)
         <p className="text-base text-gray-700">
             {description}
         </p>
+        {details && <p className="text-base text-purple-400">{details}</p>}
         </div>
-        <div className="text-center">
+        {!details && <div className="text-center">
             <button onClick={onNavigate} className="px-4 py-2 my-1 font-semibold text-blue-700 bg-transparent border border-blue-500 rounded hover:bg-blue-500 hover:text-white hover:border-transparent">
                 Read More...
             </button>
         </div>
+        }
     </div>
     )
 }

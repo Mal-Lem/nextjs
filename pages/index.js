@@ -1,61 +1,61 @@
+// importation des modules nécessaires depuis Next.js et React
 import Head from 'next/head';
 import { Fragment } from 'react';
-import BlogItem from '../components/BlogItem/BlogItem';
+import BlogItem from '../components/BlogItem/BlogItem';  // Importation d'un composant BlogItem réutilisable
+import { MongoClient } from 'mongodb';  // Importation du client MongoDB
 
-export const BLOG_POSTS = [
-    {
-    id:1,
-    slug:"premier-blog",
-    title:"premier Post",
-    image:"https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    description:"c'est mon premier post",
-    details:"a propos des blogs...",
-},
-{
-    id:2,
-    slug:"deuxieme-blog",
-    title:"deuxieme post",
-    image:"https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    description:"c'est mon deuxieme post",
-    details:"a propos des blogs...",
-},
-]
-
+// définition de la fonction de la page principale
 export default function Home(props) {
   return (
     <Fragment>
-    <Head>
+      {/* configuration des éléments Head de la page */}
+      <Head>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat&family=Source+Sans+3:wght@400;600;700&display=swap" 
         rel="stylesheet"/>
-    </Head>
-    <h1>Blogs Page</h1>
-    {
-        BLOG_POSTS.map((blog) => (
-        <div  key={blog.id} className='flex flex-col'>
-        <BlogItem 
-        title={blog.title} 
-        image={blog.image} 
-        description={blog.description} 
-        details={blog.details}
-        slub={blog.slub}
-        />
+        <title>FeedBack Client BigNova </title>
+      </Head>
+      {/* affichage du titre de la page */}
+      <h1>Client Reviews BigNova</h1>
+      {/* mapping des données blogPosts pour afficher plusieurs éléments BlogItem */}
+      {props.blogPosts.map((blog) => (
+        <div key={blog.id} className='flex flex-col'>
+          {/* utilisation du composant réutilisable BlogItem avec des propriétés spécifiques */}
+          <BlogItem 
+            title={blog.title} 
+            image={blog.image} 
+            description={blog.description} 
+            slug={blog.slug}
+          />
         </div>
-        ))}
-
+      ))}
     </Fragment>
   );
 }
-// export async function getStaticProps(context){
-//   //envoyer des requetes au backend api
-//   //lire les fichiers
-//   //connection au db
-//   const {req,res}=context
-//   //console.log(req,res)
 
-//   return{
-//     props:{
-//       blogPosts: BLOG_POSTS
-//     },
-//     revalidate: 3600,//chaque 1h
-//   }
-// }
+// fonction asynchrone pour récupérer des données statiques lors de la génération de la page
+export async function getStaticProps(context) {
+  // connexion à la base de données MongoDB
+  const client = await MongoClient.connect("mongodb+srv://aguerah:61SLs6nYNycB8xrF@cluster0.ykn5w7p.mongodb.net/my-project?retryWrites=true&w=majority")
+
+  // récupération des données depuis la collection "posts" de la base de données
+  const blogPostsCollection = client.db().collection("posts");
+  const blogPosts = await blogPostsCollection.find().toArray(); 
+  
+  // fermeture de la connexion à la base de données
+  client.close()
+
+  // retour des données sous forme de props
+  return {
+    props: {
+      blogPosts: blogPosts.map(blog => ({
+        title: blog.title,
+        description: blog.description,
+        details: blog.details,
+        image: blog.image,
+        id: blog._id.toString(),
+        slug: blog.slug
+      })),
+    },
+    revalidate: 36000,  // revalidation toutes les 1 heure
+  }
+}

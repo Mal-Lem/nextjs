@@ -1,44 +1,89 @@
 import {useRouter} from 'next/router';
 import { Fragment } from 'react';
-import { BLOG_POSTS } from '../index';
+import { MongoClient } from 'mongodb';
+import BlogItem from '../../components/BlogItem/BlogItem';
 
-
-
-export default function BlogDetails({postData}) {
-     const router = useRouter()
-    
+export default function BlogDetails(props)  {
+    const router = useRouter()
+    const {blog: {title, description, image, details} } = props;
     return (
     <Fragment>
-        <h3>Blog Details</h3>
-        <div className=''>
-        <div>
-          <h1>{postData.title}</h1>
-          <img src={postData.image} alt={postData.title} />
-          <p>{postData.description}</p>
-          <p>{postData.details}</p>
-        </div>
+        <h3>Review Details</h3>
+        <div className='flex flex-col'>
+          <BlogItem 
+          title={title} 
+          description={description} 
+          image={image} 
+          details={details}
+          />
         </div>
     </Fragment>
     
 )}
 
 export async function getStaticPaths() {
-    const paths = BLOG_POSTS.map((post) => ({
-        params: { slug: post.slug },
-      }));
-    
-      return {
-        paths,
-        fallback: false,
-      };
+  console.log('Executing getStaticPaths');
+  const client = await MongoClient.connect("mongodb+srv://aguerah:61SLs6nYNycB8xrF@cluster0.ykn5w7p.mongodb.net/my-project?retryWrites=true&w=majority");
+
+  const blogPostsCollection = client.db().collection("posts");
+  const blogPosts = await blogPostsCollection.find({},{ slug: 1 }).toArray();
+
+  client.close();
+
+  return{
+    paths: blogPosts.map(({slug}) => ({
+      params:{ slug },
+    })),
+    fallback: true,
+  }
 }
 
-export async function getStaticProps({ params }) {
-    const postData = BLOG_POSTS.find((post) => post.slug === params.slug);
+// export async function getStaticProps(context) {
+//     const blogID = context.params.slug;
+//     const client = await MongoClient.connect("mongodb+srv://aguerah:61SLs6nYNycB8xrF@cluster0.ykn5w7p.mongodb.net/my-project?retryWrites=true&w=majority");
+//     try{
+//       const blogPostsCollection = client.db().collection("posts");
+//       const blogPost = await blogPostsCollection.findOne({ slug:blogID });
+//     return {
+//       props: {
+//         blog:{
+//         title:blogPost.title,
+//         description:blogPost.description,
+//         image:blogPost.image,
+//         details:blogPost.details,
+//         }
+//       },
+//     };
+//     } finally{
+//       client.close();
+//     }
+// }
+export async function getStaticProps(context) {
+  console.log('Executing getStaticProps');
+  const blogID = context.params.slug;
+  const client = await MongoClient.connect("mongodb+srv://aguerah:61SLs6nYNycB8xrF@cluster0.ykn5w7p.mongodb.net/my-project?retryWrites=true&w=majority");
+  
+  try {
+      const blogPostsCollection = client.db().collection("posts");
+      const blogPost = await blogPostsCollection.findOne({ slug: blogID });
 
-  return {
-    props: {
-      postData,
-    },
-  };
+      if (!blogPost) {
+          return {
+              notFound: true,
+          };
+      }
+
+      return {
+          props: {
+              blog: {
+                  title: blogPost.title,
+                  description: blogPost.description,
+                  image: blogPost.image,
+                  details: blogPost.details,
+              },
+          },
+      };
+  } finally {
+      client.close();
+  }
 }
